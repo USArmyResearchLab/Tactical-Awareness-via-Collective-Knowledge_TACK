@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- steps to add to build additions -->
+<root xmlns:android="http://schemas.android.com/apk/res/android">
+	<!-- init section is always evaluated once per architecture -->
+	<init>
+		<log text= "APL INIT FOR LIBRDKAFKA ANDRIOD"/>
+	</init>
+
+	<!-- optional files or directories to copy to Intermediate/Android/APK -->
+	<resourceCopies>
+		<!-- <isArch arch="arm64-v8a"> -->
+			<log text= "PLUGIN DIR $S(PluginDir)"/>
+			<log text= "BUILD DIR $S(BuildDir)"/>
+			<log text= "librdkafka APL copying files for $S(Architecture)"/>
+			<log text= "librdkafka APL copying files for $S(Architecture)"/>
+		  	<copyFile src="$S(PluginDir)arm64-v8a/liblz4.so" dst="$S(BuildDir)/libs/arm64-v8a/liblz4.so" />
+	        <copyFile src="$S(PluginDir)arm64-v8a/librdkafka.so" dst="$S(BuildDir)/libs/arm64-v8a/librdkafka.so" />
+		<!-- </isArch> -->
+	</resourceCopies>
+
+	
+
+	<soLoadLibrary>
+		<loadLibrary name="lz4" failmsg="Failed to load lz4 library" />
+		<loadLibrary name="rdkafka" failmsg="Failed to load rdkafka library" />
+	</soLoadLibrary>
+
+</root>
