@@ -5,6 +5,7 @@
 #include "HeadMountedDisplayTypes.h"
 #include "TackXRSubsystem.generated.h"
 
+
 class IMotionController;
 class UMotionControllerComponent;
 
@@ -31,7 +32,7 @@ private:
     bool Tick(float DeltaTime);
     FDelegateHandle ActorWorldSpawnedHandle;
 
-    FDelegateHandle TickHandle;
+    FTSTicker::FDelegateHandle TickHandle;
 
     TArray<FName> FXRMotionControllerBaseSupport;
 };

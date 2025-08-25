@@ -1,15 +1,16 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "Fmo.h"
+
 #include "Fmc.h"
 #include "Misc/Paths.h"
 #include "UnrealEngine.h"
 #include "TackSnapshotSubsystem.h"
 
 
-UFmo::UFmo()
-    : Super()
+UFmo::UFmo() : Super()
 {
+
 }
 
 UTackSnapshotSubsystem* UFmo::GetSnapshotSubsystem() const

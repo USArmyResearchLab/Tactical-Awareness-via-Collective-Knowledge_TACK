@@ -41,9 +41,9 @@ bool UTackAuthorityPublisherComponent::NeedsLoadForClient() const
 void UTackAuthorityPublisherComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
     Super::EndPlay(EndPlayReason);
+    //fix for clients crashing on seamless server travel
     if(GetOwner()->HasAuthority())
     {
-        //fix for clients crashing on seamless server travel
         if(GetWorld()->GetGameState() != nullptr)
         {
             PublishLifetimeEvent(TEXT("Destroyed"), GetWorld()->GetGameState()->GetServerWorldTimeSeconds());
@@ -250,7 +250,7 @@ void UTackAuthorityPublisherComponent::OnActorTakePointDamage(AActor* DamagedAct
     bAlreadyPublishedCurrentDamage = true;
 }
 
-void UTackAuthorityPublisherComponent::OnActorTakeRadialDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, FVector Origin, FHitResult HitInfo, AController* InstigatedBy, AActor* DamageCauser)
+void UTackAuthorityPublisherComponent::OnActorTakeRadialDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, FVector Origin, const FHitResult& HitInfo, AController* InstigatedBy, AActor* DamageCauser)
 {
     SCOPE_CYCLE_COUNTER(STAT_Actor_DamagePublish);
 

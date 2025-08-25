@@ -29,8 +29,6 @@ public:
     void OnTackEnd();
     virtual void OnTackEnd_Implementation() override;
 
-public:
-
     virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 private:

@@ -1,9 +1,11 @@
 #include "TackSnapshotSubsystem.h"
+
 #include "Fmo.h"
 #include "Fmc.h"
 #include "TackManager.h"
 #include "TackSettings.h"
 #include "Misc/Paths.h"
+
 
 bool UTackSnapshotSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
@@ -69,6 +71,7 @@ void UTackSnapshotSubsystem::OnTackStart_Implementation()
         UE_LOG(LogTackSnapshots, Error, TEXT("Failed to start Snapshot Capture"));
     }
 }
+
 void UTackSnapshotSubsystem::OnTackEnd_Implementation()
 {
     Super::OnTackEnd_Implementation();
@@ -79,7 +82,7 @@ void UTackSnapshotSubsystem::StopMediaCapture()
 {
     if(MediaCapture != nullptr)
     {
-        MediaCapture->StopCapture(true);
+        MediaCapture->StopCapture(false);
         MediaCapture = nullptr;
     }
 }

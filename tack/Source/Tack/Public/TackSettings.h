@@ -2,6 +2,7 @@
 #include "Engine/DeveloperSettings.h"
 #include "TackSettings.generated.h"
 
+
 UENUM()
 enum class EImgTypeEnum
 {
@@ -15,7 +16,6 @@ class TACK_API UTackSettings : public UDeveloperSettings
     GENERATED_BODY()
 
 public: // --- General Settings ---
-
     UPROPERTY(EditAnywhere, noclear, config, Category = "General")
     FString ExperimentName;
 
@@ -47,6 +47,7 @@ public: // --- General Settings ---
     UPROPERTY(EditAnywhere, noclear, config, Category = "Camera Transfrom Publisher")
     bool bEnableCameraTransformPublisher = true;
 
+    //meta=(DisplayName="Tick Interval (secs)")
     /** The frequency in seconds at which this tick function will be executed.  If less than or equal to 0 then it will tick every frame */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, config, Category = "Camera Transfrom Publisher", meta = (EditCondition = bEnableCameraTransformPublisher))
     float CameraTransformPublisherTickInterval = 0.0f;
@@ -83,9 +84,6 @@ public: // --- General Settings ---
 
     UPROPERTY(EditAnywhere, noclear, config, Category = "EyeTracker Settings")
     bool bEnableEyetrackerPublisher = true;
-
-    UPROPERTY(EditAnywhere, noclear, config, Category = "EyeTracker Settings")
-    bool bForceDefaultEyetrackerPublisher = true;
 
     UPROPERTY(EditAnywhere, noclear, config, Category = "EyeTracker Settings")
     float MaximumTraceDistance = 100000.f;

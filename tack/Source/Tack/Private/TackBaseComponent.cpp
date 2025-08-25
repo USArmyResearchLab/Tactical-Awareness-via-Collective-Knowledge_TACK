@@ -5,6 +5,7 @@
 #include "Engine/ActorChannel.h"
 #include "Net/Core/PushModel/PushModel.h"
 
+
 UTackBaseComponent::UTackBaseComponent()
 {
     PrimaryComponentTick.bCanEverTick = false;
@@ -72,7 +73,7 @@ bool UTackBaseComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* 
 {
     bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
 
-    if(TackIdComponent != nullptr && !TackIdComponent->IsPendingKill())
+    if(IsValid(TackIdComponent))
     {
         WroteSomething |= Channel->ReplicateSubobject(TackIdComponent, *Bunch, *RepFlags);
     }

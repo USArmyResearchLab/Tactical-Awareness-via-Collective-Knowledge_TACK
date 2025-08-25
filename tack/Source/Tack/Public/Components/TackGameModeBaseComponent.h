@@ -22,7 +22,6 @@ public:
     virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
     //Helpers
-public:
 
     AGameModeBase* GetGameMode() const { return GameModeBase; }
     AGameStateBase* GetGameState() const { return GetGameMode()->GameState; }

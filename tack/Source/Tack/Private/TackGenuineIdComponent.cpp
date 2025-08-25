@@ -43,6 +43,8 @@ void UTackGenuineIdComponent::PostNetReceive()
     check(Guid.IsValid());
 }
 
+
+
 void UTackGenuineIdComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -59,8 +61,7 @@ TStructOnScope<FActorComponentInstanceData> UTackGenuineIdComponent::GetComponen
 
 //TACK COMPONENT INSTANCE DATA STRUCT
 
-FTackGenuineIdComponentInstanceData::FTackGenuineIdComponentInstanceData(const UTackGenuineIdComponent* SourceComponent)
-    : FActorComponentInstanceData(SourceComponent)
+FTackGenuineIdComponentInstanceData::FTackGenuineIdComponentInstanceData(const UTackGenuineIdComponent* SourceComponent) : FActorComponentInstanceData(SourceComponent)
 {
     Guid = SourceComponent->Guid;
 }

@@ -7,6 +7,7 @@
 
 #include "Fmc.generated.h"
 
+
 //basically the same as UFileMediaCapture but has some changes to it
 UCLASS()
 class UFmc : public UMediaCapture
@@ -14,9 +15,8 @@ class UFmc : public UMediaCapture
     GENERATED_BODY()
 
 protected:
-    virtual void OnFrameCaptured_RenderingThread(const FCaptureBaseData& InBaseData, TSharedPtr<FMediaCaptureUserData, ESPMode::ThreadSafe> InUserData, void* InBuffer, int32 Width, int32 Height) override;
-    virtual bool CaptureSceneViewportImpl(TSharedPtr<FSceneViewport>& InSceneViewport) override;
-    virtual bool CaptureRenderTargetImpl(UTextureRenderTarget2D* InRenderTarget) override;
+    virtual void OnFrameCaptured_RenderingThread(const FCaptureBaseData& InBaseData, TSharedPtr<FMediaCaptureUserData, ESPMode::ThreadSafe> InUserData, void* InBuffer, int32 Width, int32 Height, int32 BytesPerRow) override;
+    virtual bool InitializeCapture() override;
 
     virtual TSharedPtr<FMediaCaptureUserData, ESPMode::ThreadSafe> GetCaptureFrameUserData_GameThread();
 
@@ -26,7 +26,7 @@ private:
 public:
     int JpegQuality;
     FFrameRate CaptureFrameRate;
-    FFrameNumber LastCapturedFrame;
+    FFrameNumber LastCaputredFrame;
     FString LocalTackID;
     bool bSendKafka;
     bool bSaveToFile;

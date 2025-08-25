@@ -34,9 +34,14 @@ void UTackGameModeBaseComponent::BeginPlay()
 
 
     if(UTackGameStateBaseComponent* GameStateComponent = NewObject<UTackGameStateBaseComponent>(GetGameState(), TackGameStateClassToSpawn))
+    {
         GameStateComponent->RegisterComponent();
+
+    }
     else
+    {
         UE_LOG(LogTack, Fatal, TEXT("Failed to spawn TackGameStateComponent"));
+    }
 }
 
 void UTackGameModeBaseComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)

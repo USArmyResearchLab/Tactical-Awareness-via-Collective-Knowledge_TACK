@@ -16,7 +16,8 @@ public class TackXR : ModuleRules
 				"Engine",
 				"HeadMountedDisplay",
 				"Json",
-				"JsonUtilities"
+				"JsonUtilities",
+				"XRBase"
 			}
 		);
 	}

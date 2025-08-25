@@ -40,13 +40,14 @@ const FGuid& UTackStatics::GetTackIdFromActor(const AActor* Actor)
 
 bool UTackStatics::IsActorValidForTackComponent(const AActor* Actor)
 {
+
     if(Actor == nullptr)
         return false;
 
     UWorld* World = Actor->GetWorld();
     //Contant defulats that are never valid
     if(
-        Actor->IsPendingKill() || // don't add pending kill
+        IsValid(Actor) == false || // don't add pending kill
         Actor->IsTemplate() ||  // don't add templates
         Actor->IsEditorOnly() || // don't add ediotr only actors
         // FActorEditorUtils::IsABuilderBrush(Actor) || // don't add brush actors

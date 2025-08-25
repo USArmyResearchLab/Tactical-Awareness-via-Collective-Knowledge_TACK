@@ -16,16 +16,15 @@ UTackSnapshotSubsystem* UFmc::GetSnapshotSubsystem() const
     return CastChecked<UFmo>(GetOuter())->GetSnapshotSubsystem();
 }
 
-void UFmc::OnFrameCaptured_RenderingThread(const FCaptureBaseData& InBaseData, TSharedPtr<FMediaCaptureUserData, ESPMode::ThreadSafe> InUserData, void* InBuffer, int32 Width, int32 Height)
+void UFmc::OnFrameCaptured_RenderingThread(const FCaptureBaseData& InBaseData, TSharedPtr<FMediaCaptureUserData, ESPMode::ThreadSafe> InUserData, void* InBuffer, int32 Width, int32 Height, int32 BytesPerRow)
 {
-    //this is limited to 24fps by the InBaseData, higher frame rates are possible but this calculation needs to be replaced
     FFrameNumber CurrentFrame = FFrameRate::TransformTime(
         FFrameTime(InBaseData.SourceFrameTimecode.ToFrameNumber(InBaseData.SourceFrameTimecodeFramerate)),
         InBaseData.SourceFrameTimecodeFramerate,
         CaptureFrameRate
     ).FloorToFrame();
 
-    if(CurrentFrame != LastCapturedFrame)
+    if(CurrentFrame != LastCaputredFrame)
     {
         IImageWriteQueueModule* ImageWriteQueueModule = FModuleManager::Get().GetModulePtr<IImageWriteQueueModule>("ImageWriteQueue");
         if(ImageWriteQueueModule == nullptr)
@@ -37,7 +36,6 @@ void UFmc::OnFrameCaptured_RenderingThread(const FCaptureBaseData& InBaseData, T
         TUniquePtr<FKImageWriteTask> ImageTask = MakeUnique<FKImageWriteTask>();
         auto CustomCaptureData = StaticCastSharedPtr<FCustomCapData>(InUserData);
 
-        ImageTask->SnapshotSubsystem = GetSnapshotSubsystem();
         ImageTask->Format = ImageFormat;
         ImageTask->Filename = FString::Printf(TEXT("%s%s"), *BaseFilePathName, *CustomCaptureData->ImgId);
         ImageTask->ImgId = CustomCaptureData->ImgId;
@@ -52,12 +50,26 @@ void UFmc::OnFrameCaptured_RenderingThread(const FCaptureBaseData& InBaseData, T
         EPixelFormat PixelFormat = GetDesiredPixelFormat();
         if(PixelFormat == PF_B8G8R8A8)
         {
+            // We only support tightly packed rows without padding
+            if((BytesPerRow != 0) && (BytesPerRow != (Width * 4)))
+            {
+                UE_LOG(LogTemp, Error, TEXT("File media capture only supports tightly packed rows. Expected stride: %d. Received stride: %d. It might also mean that output resolution is too small."), Width * 4, BytesPerRow);
+                SetState(EMediaCaptureState::Error);
+                return;
+            }
             TUniquePtr<TImagePixelData<FColor>> PixelData = MakeUnique<TImagePixelData<FColor>>(FIntPoint(Width, Height), TArray<FColor, FDefaultAllocator64>(reinterpret_cast<FColor*>(InBuffer), Width * Height));
             ImageTask->PixelData = MoveTemp(PixelData);
         }
         else if(PixelFormat == PF_FloatRGBA)
         {
-            TUniquePtr<TImagePixelData<FColor>> PixelData = MakeUnique<TImagePixelData<FColor>>(FIntPoint(Width, Height), TArray<FColor, FDefaultAllocator64>(reinterpret_cast<FColor*>(InBuffer), Width * Height));
+            // We only support tightly packed rows without padding
+            if((BytesPerRow != 0) && (BytesPerRow != (Width * 8)))
+            {
+                UE_LOG(LogTemp, Error, TEXT("File media capture only supports tightly packed rows. Expected stride: %d. Received stride: %d. It might also mean that output resolution is too small."), Width * 8, BytesPerRow);
+                SetState(EMediaCaptureState::Error);
+                return;
+            }
+            TUniquePtr<TImagePixelData<FFloat16Color>> PixelData = MakeUnique<TImagePixelData<FFloat16Color>>(FIntPoint(Width, Height), TArray<FFloat16Color, FDefaultAllocator64>(reinterpret_cast<FFloat16Color*>(InBuffer), Width * Height));
             ImageTask->PixelData = MoveTemp(PixelData);
         }
         else
@@ -75,32 +87,9 @@ void UFmc::OnFrameCaptured_RenderingThread(const FCaptureBaseData& InBaseData, T
                 DispatchedTask.Wait();
             }
         }
-        LastCapturedFrame = CurrentFrame;
+
+        LastCaputredFrame = CurrentFrame;
     }
-}
-
-bool UFmc::CaptureSceneViewportImpl(TSharedPtr<FSceneViewport>& InSceneViewport)
-{
-    UFmo* FileMediaOutput = CastChecked<UFmo>(MediaOutput);
-    CaptureFrameRate = FileMediaOutput->CaptureFrameRate;
-
-    FModuleManager::Get().LoadModuleChecked<IImageWriteQueueModule>("ImageWriteQueue");
-    CacheMediaOutputValues();
-
-    SetState(EMediaCaptureState::Capturing);
-    return true;
-}
-
-bool UFmc::CaptureRenderTargetImpl(UTextureRenderTarget2D* InRenderTarget)
-{
-    UFmo* FileMediaOutput = CastChecked<UFmo>(MediaOutput);
-    CaptureFrameRate = FileMediaOutput->CaptureFrameRate;
-
-    FModuleManager::Get().LoadModuleChecked<IImageWriteQueueModule>("ImageWriteQueue");
-    CacheMediaOutputValues();
-
-    SetState(EMediaCaptureState::Capturing);
-    return true;
 }
 
 TSharedPtr<FMediaCaptureUserData, ESPMode::ThreadSafe> UFmc::GetCaptureFrameUserData_GameThread()
@@ -113,9 +102,19 @@ TSharedPtr<FMediaCaptureUserData, ESPMode::ThreadSafe> UFmc::GetCaptureFrameUser
     );
 }
 
+bool UFmc::InitializeCapture()
+{
+    FModuleManager::Get().LoadModuleChecked<IImageWriteQueueModule>("ImageWriteQueue");
+    CacheMediaOutputValues();
+
+    SetState(EMediaCaptureState::Capturing);
+
+    return true;
+}
+
 void UFmc::CacheMediaOutputValues()
 {
-    UFileMediaOutput* FileMediaOutput = CastChecked<UFileMediaOutput>(MediaOutput);
+    UFmo* FileMediaOutput = CastChecked<UFmo>(MediaOutput);
     BaseFilePathName = FPaths::Combine(FileMediaOutput->FilePath.Path, FileMediaOutput->BaseFileName);
     ImageFormat = ImageFormatFromDesired(FileMediaOutput->WriteOptions.Format);
     CompressionQuality = FileMediaOutput->WriteOptions.CompressionQuality;

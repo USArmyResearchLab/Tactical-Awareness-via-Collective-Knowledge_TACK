@@ -27,7 +27,6 @@ public:
     virtual void OnTackStart_Implementation() override;
     virtual void OnTackEnd_Implementation() override;
 
-
 private:
 
     void PublishActor() const;
@@ -55,7 +54,7 @@ private:
     UFUNCTION()
     void OnActorTakePointDamage(AActor* DamagedActor, float Damage, AController* InstigatedBy, FVector HitLocation, UPrimitiveComponent* HitComponent, FName BoneName, FVector ShotFromDirection, const UDamageType* DamageType, AActor* DamageCauser);
     UFUNCTION()
-    void OnActorTakeRadialDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, FVector Origin, FHitResult HitInfo, AController* InstigatedBy, AActor* DamageCauser);
+    void OnActorTakeRadialDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, FVector Origin, const FHitResult& HitInfo, AController* InstigatedBy, AActor* DamageCauser);
     UFUNCTION()
     void OnActorTakeAnyDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser);
 

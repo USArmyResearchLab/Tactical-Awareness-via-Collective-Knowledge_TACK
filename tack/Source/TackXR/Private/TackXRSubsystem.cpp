@@ -12,6 +12,7 @@
 #include "UObject/UObjectIterator.h"
 #include "IXRSystemAssets.h"
 
+
 bool UTackXRSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
     return !IsRunningDedicatedServer();
@@ -56,20 +57,20 @@ void UTackXRSubsystem::Deinitialize()
 {
     Super::Deinitialize();
     GetWorld()->RemoveOnActorSpawnedHandler(ActorWorldSpawnedHandle);
-    FTicker::GetCoreTicker().RemoveTicker(TickHandle);
+    FTSTicker::GetCoreTicker().RemoveTicker(TickHandle);
     MotionControllerMap.Empty();
 }
 
 void UTackXRSubsystem::OnTackStart_Implementation()
 {
     Super::OnTackStart_Implementation();
-    TickHandle = FTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UTackXRSubsystem::Tick));
+    TickHandle = FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UTackXRSubsystem::Tick));
 }
 
 void UTackXRSubsystem::OnTackEnd_Implementation()
 {
     Super::OnTackEnd_Implementation();
-    FTicker::GetCoreTicker().RemoveTicker(TickHandle);
+    FTSTicker::GetCoreTicker().RemoveTicker(TickHandle);
 }
 
 void UTackXRSubsystem::OnActorSpawnedEvent(AActor* Actor)
@@ -82,10 +83,10 @@ void UTackXRSubsystem::OnActorSpawnedEvent(AActor* Actor)
 
 bool UTackXRSubsystem::Tick(float dtime)
 {
-
     if(GEngine == nullptr || !GEngine->XRSystem.IsValid())
         return true;
 
+    //TArray<IXRSystemAssets*> XRAssetSystems = IModularFeatures::Get().GetModularFeatureImplementations<IXRSystemAssets>(IXRSystemAssets::GetModularFeatureName());
     TArray<IMotionController*> MotionControllers = IModularFeatures::Get().GetModularFeatureImplementations<IMotionController>(IMotionController::GetModularFeatureName());
     for(auto MotionController : MotionControllers)
     {

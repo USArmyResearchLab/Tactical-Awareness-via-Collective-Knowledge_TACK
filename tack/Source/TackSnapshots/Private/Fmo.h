@@ -1,3 +1,5 @@
+// Copyright Epic Games, Inc. All Rights Reserved.
+
 #pragma once
 
 #include "Engine/RendererSettings.h"
@@ -5,6 +7,7 @@
 #include "FileMediaOutput.h"
 
 #include "Fmo.generated.h"
+
 
 UCLASS(BlueprintType)
 class UFmo : public UFileMediaOutput

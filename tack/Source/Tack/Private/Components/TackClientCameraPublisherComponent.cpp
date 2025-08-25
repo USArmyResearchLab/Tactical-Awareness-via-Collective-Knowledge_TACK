@@ -49,7 +49,8 @@ void UTackClientCameraPublisherComponent::TickComponent(float DeltaTime, enum EL
 
     if(PlayerCameraManager != nullptr)
     {
-        const FMinimalViewInfo CurrentPOV = PlayerCameraManager->GetCameraCachePOV();
+
+        const FMinimalViewInfo CurrentPOV = PlayerCameraManager->GetCameraCacheView();
 
         if(!CurrentPOV.Location.Equals(PreviousCameraLocation, Tolerance) || !CurrentPOV.Rotation.Equals(PreviousCameraRotation, Tolerance))
         {

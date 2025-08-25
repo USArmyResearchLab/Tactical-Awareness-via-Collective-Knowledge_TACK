@@ -17,7 +17,7 @@ public:
 private:
 
     UPROPERTY()
-    class UMediaCapture* MediaCapture;
+    UMediaCapture* MediaCapture;
 
     void StopMediaCapture();
 };

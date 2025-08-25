@@ -15,6 +15,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/GameStateBase.h"
 
+
 UTackManager* UTackManager::GetInstance(const UObject* WorldContextObject)
 {
     if(UWorld* World = GEngine->GetWorldFromContextObject(WorldContextObject, EGetWorldErrorMode::LogAndReturnNull))
@@ -92,13 +93,12 @@ void UTackManager::Deinitialize()
     GetGameInstance()->OnNotifyPreClientTravel().RemoveAll(this);
     GetGameInstance()->GetOnPawnControllerChanged().RemoveAll(this);
     GetGameInstance()->GetEngine()->OnTravelFailure().RemoveAll(this);
-
     Publisher->DisablePublisher();
 }
 
 void UTackManager::OnGameModePostLoginEvent(AGameModeBase* GameMode, APlayerController* NewPlayer)
 {
-    if(!NewPlayer->IsPendingKill())
+    if(IsValid(NewPlayer))
     {
         auto TackControllerComponent = NewPlayer->FindComponentByClass<UTackControllerComponent>();
         if(TackControllerComponent == nullptr)
@@ -144,33 +144,21 @@ void UTackManager::OnWorldBeginTearingDown(UWorld* World)
 
 void UTackManager::OnNotifyPreClientTravel(const FString& PendingURL, ETravelType TravelType, bool bIsSeamlessTravel)
 {
-    //Commented out. This needs testing to verify it works correctly
-    // if(IsTackRunning())
-    // {
-    //     UWorld* World = GetGameInstance()->GetWorld();
-    //     UE_LOG(LogTack, Log, TEXT("%s - leaving world %s stopping tack"), *GetTackLogPrefix(World), *World->URL.Map);
-    //     StopTack();
-    // }
+
 }
 
 void UTackManager::OnTravelFailure(UWorld* InWorld, ETravelFailure::Type FailureType, const FString& ErrorString)
 {
-    //Commented out. This needs testing to verify it works correctly
-    // if(IsTackRunning())
-    // {
-    //     UE_LOG(LogTack, Error, TEXT("%s - Travel Failure Stopping Local Tack"), *GetTackLogPrefix(InWorld));
-    //     StopTack();
-    // }
+
 }
 
 void UTackManager::OnPawnControllerChanged(APawn* Pawn, AController* Controller)
 {
     if(
-        Pawn != nullptr &&
-        !Pawn->IsPendingKill() &&
+        IsValid(Pawn) &&
         Pawn->GetWorld() != nullptr &&
         Pawn->GetWorld()->GetGameState() != nullptr &&
-        GetGameInstance()->GetWorld()->IsServer()
+        GetGameInstance()->GetWorld()->GetNetMode() < ENetMode::NM_Client
         )
     {
         if(Controller != nullptr && Controller->IsPlayerController() && Controller->PlayerState == nullptr)
@@ -198,7 +186,7 @@ FString UTackManager::GetKafkaConnectionString() const
 
     UWorld* World = GetGameInstance()->GetWorld();
 
-    if(World->IsServer() || Settings->bForceClientToUseLocalConnectionString)
+    if(World->GetNetMode() < ENetMode::NM_Client || Settings->bForceClientToUseLocalConnectionString)
     {
         return Settings->LocalConnectionString;
     }
@@ -230,7 +218,7 @@ void UTackManager::StartTack()
         return;
     }
 
-    if(GetGameInstance()->GetWorld()->IsServer())
+    if(GetGameInstance()->GetWorld()->GetNetMode() < ENetMode::NM_Client)
     {
         //Start Tack with new Session Guid
         StartTackLocally(FGuid::NewGuid());
@@ -239,7 +227,7 @@ void UTackManager::StartTack()
     {
         if(auto TackControllerComponent = World->GetFirstPlayerController()->FindComponentByClass<UTackControllerComponent>())
         {
-            TackControllerComponent->ServerStartTack();
+            TackControllerComponent->ServerStopTack();
         }
         else
         {
@@ -261,11 +249,11 @@ void UTackManager::StopTack()
         return;
     }
 
-    if(GetGameInstance()->GetWorld()->IsServer())
+    if(GetGameInstance()->GetWorld()->GetNetMode() < ENetMode::NM_Client)
     {
         check(IsTackRunning()) // Tack must not be running to call this
             check(CurrentSessionId.IsValid()) // session id should be valid at this point
-            check(GetGameInstance()->GetWorld()->IsServer()); //Only call this on server
+            check(GetGameInstance()->GetWorld()->GetNetMode() < ENetMode::NM_Client); //Only call this on server
 
         StopTackLocally();
     }
@@ -297,7 +285,7 @@ void UTackManager::Internal_StartTack(const FGuid& SessionId)
     check(SessionId.IsValid());
 
     UWorld* World = GetGameInstance()->GetWorld();
-    bool bIsServer = World->IsServer();
+    bool bIsServer = World->GetNetMode() < ENetMode::NM_Client;
 
     if(IsTackRunning())
     {
@@ -343,12 +331,15 @@ void UTackManager::Internal_StartTack(const FGuid& SessionId)
     SubsystemCollection.Initialize(this);
 
     static const EObjectFlags ExcludeFlags = RF_ClassDefaultObject | RF_ArchetypeObject;
-    for(TObjectIterator<UObject> It(ExcludeFlags, true, EInternalObjectFlags::PendingKill); It; ++It)
+    for(TObjectIterator<UObject> It(ExcludeFlags, true, EInternalObjectFlags::Garbage); It; ++It)
     {
         if(It->GetWorld() == World && It->Implements<UTackReceivesStateChangeInterface>())
         {
             ITackReceivesStateChangeInterface::Execute_OnTackStart(*It);
         }
+
+        // if(ITackRecievesStateChangeInterface* TackInterface = Cast<ITackRecievesStateChangeInterface>(*It))
+        //     TackInterface->OnTackStart();
     }
 
     OnTackStart.Broadcast();
@@ -362,7 +353,7 @@ void UTackManager::Internal_StartTack(const FGuid& SessionId)
 void UTackManager::Internal_StopTack()
 {
     UWorld* World = GetGameInstance()->GetWorld();
-    bool bIsServer = World->IsServer();
+    bool bIsServer = World->GetNetMode() < ENetMode::NM_Client;
     FString LogPrefix = GetTackLogPrefix(World);
 
     if(!IsTackRunning())
@@ -384,7 +375,7 @@ void UTackManager::Internal_StopTack()
     OnTackEnd.Broadcast();
 
     static const EObjectFlags ExcludeFlags = RF_ClassDefaultObject | RF_ArchetypeObject;
-    for(TObjectIterator<UObject> It(ExcludeFlags, true, EInternalObjectFlags::PendingKill); It; ++It)
+    for(TObjectIterator<UObject> It(ExcludeFlags, true, EInternalObjectFlags::Garbage); It; ++It)
     {
         if(It->GetWorld() == World && It->Implements<UTackReceivesStateChangeInterface>())
         {

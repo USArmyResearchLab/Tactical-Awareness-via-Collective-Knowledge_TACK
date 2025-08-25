@@ -32,8 +32,7 @@ THIRD_PARTY_INCLUDES_END
 #endif
 
 
-namespace callbacks
-{
+namespace callbacks {
     void kafka_error_cb(rd_kafka_t* rk, int err, const char* reason, void* opaque)
     {
         FString LogString = FString::Printf(TEXT("%s - ERROR(%d) - %s"), StringCast<TCHAR>(rd_kafka_name(rk)).Get(), err, StringCast<TCHAR>(reason).Get());
@@ -206,6 +205,7 @@ rd_kafka_t* UTackPublisher::GetProducer()
         rd_kafka_header_add(headers, "tack_client_id", -1, InstanceGuid.Get(), -1);
         auto SessionGuid = StringCast<ANSICHAR>(*PublisherSessionGuid.ToString());
         rd_kafka_header_add(headers, "tack_session_id", -1, SessionGuid.Get(), -1);
+
     }
 #endif
     return c_producer;
@@ -253,6 +253,7 @@ void UTackPublisher::Publish_Data(const FString& TopicName, size_t Size, void* D
             RD_KAFKA_V_RKT(Topic),
             RD_KAFKA_V_VALUE(Data, Size),
             RD_KAFKA_V_KEY(Key.Get(), Key.Length()),
+            //RD_KAFKA_V_PARTITION(RD_KAFKA_PARTITION_UA),
             RD_KAFKA_V_TIMESTAMP(Timestamp == DEFAULT_TIMESTAMP ? UTackStatics::GetCurrentTimestamp() : Timestamp),
             RD_KAFKA_V_HEADERS(headersCopy),
             /* Copy the message payload so the `buf` can
@@ -316,7 +317,7 @@ DEFINE_FUNCTION(UTackPublisher::execBP_Publish_Struct)
 
 void UTackPublisher::PublishTackServerStart(UWorld* World)
 {
-    check(World->IsServer());
+    check(World->GetNetMode() < ENetMode::NM_Client);
 
     //Publish Starting Tack State Message
     PublishTackState(World, TEXT("Start"));
@@ -348,7 +349,7 @@ void UTackPublisher::PublishTackServerStart(UWorld* World)
 
 void UTackPublisher::PublishTackServerEnd(UWorld* World)
 {
-    check(World->IsServer());
+    check(World->GetNetMode() < ENetMode::NM_Client);
     PublishTackState(World, TEXT("End"));
 }
 
@@ -459,8 +460,8 @@ void UTackPublisher::Publish_Client(UWorld* World)
     }
     Object.Set(TEXT("NetMode"), NetMode);
 
-    Object.Set(TEXT("IsServer"), World->IsServer());
-    Object.Set(TEXT("IsClient"), World->IsClient());
+    Object.Set(TEXT("IsServer"), World->GetNetMode() < ENetMode::NM_Client);
+    Object.Set(TEXT("IsClient"), World->GetNetMode() == ENetMode::NM_Client);
     Object.Set(TEXT("IsDedicatedServer"), IsRunningDedicatedServer());
 
     //add client constants

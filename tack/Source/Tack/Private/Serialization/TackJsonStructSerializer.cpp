@@ -19,7 +19,7 @@ namespace Helpers
 
 bool FTackJsonStructSerializer::UStructToJsonObject(const UStruct* StructDefinition, const void* Struct, TSharedRef<FJsonObject> OutJsonObject, int64 CheckFlags, int64 SkipFlags)
 {
-    return  UStructToJsonAttributes(StructDefinition, Struct, OutJsonObject->Values, CheckFlags, SkipFlags);
+    return UStructToJsonAttributes(StructDefinition, Struct, OutJsonObject->Values, CheckFlags, SkipFlags);
 }
 
 bool FTackJsonStructSerializer::UStructToJsonAttributes(const UStruct* StructDefinition, const void* Struct, TMap< FString, TSharedPtr<FJsonValue> >& OutJsonAttributes, int64 CheckFlags, int64 SkipFlags)
@@ -185,7 +185,7 @@ TSharedPtr<FJsonValue> FTackJsonStructSerializer::ConvertScalarFPropertyToJsonVa
                     FString KeyString;
                     if(!KeyElement->TryGetString(KeyString))
                     {
-                        MapProperty->KeyProp->ExportTextItem(KeyString, Helper.GetKeyPtr(i), nullptr, nullptr, 0);
+                        MapProperty->KeyProp->ExportTextItem_Direct(KeyString, Helper.GetKeyPtr(i), nullptr, nullptr, 0);
                         if(KeyString.IsEmpty())
                         {
                             UE_LOG(LogTack, Error, TEXT("Unable to convert key to string for property %s."), *MapProperty->GetName())
@@ -197,7 +197,6 @@ TSharedPtr<FJsonValue> FTackJsonStructSerializer::ConvertScalarFPropertyToJsonVa
                 --n;
             }
         }
-
         return MakeShared<FJsonValueObject>(Out);
     }
     else if(FStructProperty* StructProperty = CastField<FStructProperty>(Property))
@@ -205,10 +204,12 @@ TSharedPtr<FJsonValue> FTackJsonStructSerializer::ConvertScalarFPropertyToJsonVa
         if(StructProperty->Struct == TBaseStructure<FVector>::Get())
         {
             return Helpers::SerializeValue<FVector>(Value);
+            //return FTackJsonDomBuilder::Serialize(*(const FVector*)(Value));
         }
         else if(StructProperty->Struct == TBaseStructure<FTransform>::Get())
         {
             return Helpers::SerializeValue<FTransform>(Value);
+            //return FTackJsonDomBuilder::Serialize(*reinterpret_cast<const FTransform*>(Value));
         }
         else if(StructProperty->Struct == TBaseStructure<FHitResult>::Get())
         {
@@ -266,7 +267,7 @@ TSharedPtr<FJsonValue> FTackJsonStructSerializer::ConvertScalarFPropertyToJsonVa
         else
         {
             FString StringValue;
-            Property->ExportTextItem(StringValue, Value, nullptr, nullptr, PPF_None);
+            Property->ExportTextItem_Direct(StringValue, Value, nullptr, nullptr, PPF_None);
             return MakeShared<FJsonValueString>(StringValue);
         }
     }
@@ -274,10 +275,9 @@ TSharedPtr<FJsonValue> FTackJsonStructSerializer::ConvertScalarFPropertyToJsonVa
     {
         // Default to export as string for everything else
         FString StringValue;
-        Property->ExportTextItem(StringValue, Value, NULL, NULL, PPF_None);
+        Property->ExportTextItem_Direct(StringValue, Value, NULL, NULL, PPF_None);
         return MakeShared<FJsonValueString>(StringValue);
     }
-
     // invalid
     return TSharedPtr<FJsonValue>();
 }
